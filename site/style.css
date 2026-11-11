@@ -707,3 +707,5 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 .viewseg button{min-height:40px}
 .qclear{width:40px;height:40px}
 .foot-end .linkbtn{min-height:44px}
+/* 검색칸: 입력칸의 기본 너비(size)가 판보다 넓어 밖으로 나가던 것(삼성 인터넷 등) — 줄어들 수 있게 */
+.searchbox{min-width:0;max-width:100%} .searchbox input{width:0;min-width:0}
