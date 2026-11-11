@@ -594,7 +594,8 @@
     }
     var favs = ITEMS.filter(function (it) { return isFav(it.id) && it.status !== "마감"; }).sort(cmpDeadline);
     if (favs.length) cols += hmCard("hm-fav", "⭐ 관심 공모전 <b>" + favs.length + "건</b>", hmMore("fav"), hmItems(favs.slice(0, 5), orgOf));
-    h += '<div class="hm-cols">' + cols + "</div>";
+    var nCards = (cols.match(/class="hm-card /g) || []).length;
+    h += '<div class="hm-cols n' + nCards + (nCards % 2 ? " odd" : "") + '">' + cols + "</div>";
     var fc = (META.fields || []).map(function (f) { return [f, open.filter(function (it) { return (it.fields || []).indexOf(f) >= 0; }).length]; })
       .filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; });
     var max = fc.length ? fc[0][1] : 1;

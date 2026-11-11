@@ -678,8 +678,17 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 .hm-bn{font-weight:900;text-align:right;font-variant-numeric:tabular-nums}
 @media (hover:hover){.hm-bar:hover{background:var(--g-soft)}}
 .hm-tile:focus-visible,.hm-day:focus-visible,.hm-bar:focus-visible,.hm-due:focus-visible,.hm-more:focus-visible{outline:3px solid var(--g-pink-hi);outline-offset:2px}
-@media (min-width:1100px){ .hm-cols{grid-template-columns:repeat(3,minmax(0,1fr))} }
-@media (max-width:899px){ .hm-cols{grid-template-columns:minmax(0,1fr)} .hm-bars{grid-template-columns:minmax(0,1fr)} }
+/* 카드 수에 맞춰 빈 칸 없이: 넓은 화면 3열(4개면 2×2, 5개면 3+2), 중간 2열(홀수면 마지막 한 줄 전체), 좁으면 1열 */
+.hm-n,.hm-l{white-space:nowrap}
+.hm-cols.odd > .hm-card:last-child{grid-column:1/-1}
+@media (min-width:1100px){
+  .hm-cols{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .hm-cols > .hm-card,.hm-cols.odd > .hm-card:last-child{grid-column:span 2}
+  .hm-cols.n4 > .hm-card,.hm-cols.n5 > .hm-card:nth-child(n+4),.hm-cols.n2 > .hm-card{grid-column:span 3}
+  .hm-cols.n1 > .hm-card{grid-column:1/-1}
+}
+@media (max-width:899px){ .hm-cols{grid-template-columns:minmax(0,1fr)} .hm-bars{grid-template-columns:minmax(0,1fr)} .hm-tiles{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:379px){ .hm-dd{display:none} .hm-day{min-height:62px} .hm-tile{column-gap:8px;padding:10px} .hm-ic{width:38px;height:38px} }
 @media (max-width:639px){
   .hm-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .hm-tile{min-height:76px;padding:10px 12px;column-gap:10px}
@@ -691,3 +700,10 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
   .hm-cta{flex-wrap:wrap} .hm-cta p{flex-basis:calc(100% - 44px)} .hm-cta .btn{width:100%}
   .hm-bar{grid-template-columns:104px 1fr 30px}
 }
+
+/* ── 줄 맞춤·누르는 칸 보정(11-11 전체 점검) ── */
+@media (min-width:640px){ .mebar .pick-label{flex:none;width:68px} } /* 출생연도·사는 곳 고르기 칸을 신분·관심 분야 칩과 같은 줄에서 시작 */
+.tb-chip,.clearall,.chip{min-height:40px}
+.viewseg button{min-height:40px}
+.qclear{width:40px;height:40px}
+.foot-end .linkbtn{min-height:44px}
