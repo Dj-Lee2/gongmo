@@ -713,3 +713,16 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 .hm-day{min-width:0;box-sizing:border-box;overflow:hidden}
 .hm-dn{box-sizing:border-box;min-width:min(34px,100%);max-width:100%}
 @media (max-width:439px){ .hm-days{gap:4px} .hm-day{padding:6px 2px} .hm-dn{padding:1px 4px;font-size:.84rem} .hm-dl{font-size:.8rem} }
+/* 오늘 마감 띠 + 내 조건 띠: 넓은 화면에서는 같은 줄(높이 맞춤), 좁으면 위아래 */
+.hm-alerts{display:grid;gap:12px}
+@media (min-width:900px){ .hm-alerts.two{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);align-items:stretch} .hm-alerts .hm-due{height:100%} }
+/* 이번 주 마감: 요일(오늘·내일)과 날짜 글자 키움 */
+.hm-dl{font-size:1rem;font-weight:900} .hm-dd{font-size:.9rem;font-weight:600;color:#4b5568} .hm-dn{font-size:1rem}
+@media (max-width:639px){ .hm-dl{font-size:.92rem} .hm-dd{font-size:.82rem} .hm-dn{font-size:.9rem} }
+@media (max-width:439px){ .hm-dl{font-size:.88rem} .hm-dd{font-size:.78rem;letter-spacing:-.02em} .hm-dn{font-size:.86rem} }
+@media (min-width:900px){ .hm-dl{font-size:1.15rem} .hm-dd{font-size:1rem} .hm-dn{font-size:1.05rem;padding:2px 12px} .hm-day{gap:4px;padding:10px 4px} }
+/* 좁은 휴대폰: 날짜는 '일'만(11.12 → 12) — 칸 안에서 두 줄로 쪼개지지 않게 */
+.hm-dd{white-space:nowrap}
+@media (max-width:439px){ .hm-dm{display:none} .hm-dd{font-size:.86rem;letter-spacing:0} }
+.hm-dl{white-space:nowrap}
+@media (max-width:379px){ .hm-day{padding:6px 0} .hm-dl{font-size:.8rem;letter-spacing:-.04em} }

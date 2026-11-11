@@ -570,15 +570,18 @@
         '<span class="hm-n">' + t[3] + '<small>건</small></span><span class="hm-l">' + t[2] + "</span></button>";
     }).join("") + "</div>";
     var dueToday = ITEMS.filter(isDueToday).length;
-    if (dueToday) h += '<button type="button" class="hm-due" data-go="open" data-due="today">⏰ 오늘 마감 <b>' + dueToday + "건</b> 바로 보기 ›</button>";
-    if (!hasMe()) h += '<div class="hm-cta"><span class="hm-cta-ic" aria-hidden="true">🎯</span><p>신분·출생연도·사는 곳을 고르면 나에게 맞는 공모전만 모아 봅니다.</p>' +
-      '<button type="button" class="btn primary" data-go="me">내 조건 고르기 ›</button></div>';
+    // 오늘 마감 띠 · 내 조건 띠: PC에서는 한 줄에 나란히
+    var alerts = [];
+    if (dueToday) alerts.push('<button type="button" class="hm-due" data-go="open" data-due="today">⏰ 오늘 마감 <b>' + dueToday + "건</b> 바로 보기 ›</button>");
+    if (!hasMe()) alerts.push('<div class="hm-cta"><span class="hm-cta-ic" aria-hidden="true">🎯</span><p>신분·출생연도·사는 곳을 고르면 나에게 맞는 공모전만 모아 봅니다.</p>' +
+      '<button type="button" class="btn primary" data-go="me">내 조건 고르기 ›</button></div>');
+    if (alerts.length) h += '<div class="hm-alerts' + (alerts.length > 1 ? " two" : "") + '">' + alerts.join("") + "</div>";
     var week = "";
     for (var i = 0; i < 7; i++) {
       var d = addDays(today, i), n = open.filter(function (it) { return it.end_date === d; }).length;
       var wd = WEEK[new Date(d + "T00:00:00Z").getUTCDay()], lab = i === 0 ? "오늘" : i === 1 ? "내일" : wd;
       week += '<button type="button" class="hm-day' + (n ? "" : " zero") + (i === 0 ? " is-today" : "") + '" data-cal="' + d + '" aria-label="' + md(d) + " " + wd + "요일 마감 " + n + '건">' +
-        '<span class="hm-dl">' + lab + '</span><span class="hm-dd">' + md(d) + '</span><span class="hm-dn">' + n + "</span></button>";
+        '<span class="hm-dl">' + lab + '</span><span class="hm-dd"><span class="hm-dm">' + (+d.slice(5, 7)) + ".</span>" + (+d.slice(8, 10)) + '</span><span class="hm-dn">' + n + "</span></button>";
     }
     h += hmCard("hm-week", "📆 이번 주 마감", hmMore("open", "마감 달력", ' data-view="cal"'), '<div class="hm-days">' + week + "</div>");
     var soon = open.filter(function (it) { return it.dday != null && it.dday >= 0; }).sort(cmpDeadline).slice(0, 5);
