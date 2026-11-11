@@ -503,3 +503,35 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 /* 로고·이름 뒤에만 무늬 없이 분홍(같은 색 판으로 가림) — 머리의 나머지 자리는 무늬 그대로 */
 .brand{background:var(--g-pink);padding:6px 16px 6px 6px;margin-left:-6px;border-radius:20px}
 @media (max-width:639px){.brand{padding:4px 12px 4px 4px;margin-left:-4px}}
+
+/* ── 고르기 창(내 조건의 출생연도·사는 곳): 기본 선택 상자 대신 사이트 모양 ── */
+.me-sel{display:flex;flex-wrap:wrap;gap:12px 20px}
+.pick{position:relative;display:flex;align-items:center;gap:10px}
+.pick-label{font-size:.86rem;font-weight:800;color:var(--g-navy)}
+.pick-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:150px;min-height:44px;padding:0 8px 0 14px;
+  background:#fff;border:2px solid var(--g-line);border-radius:12px;box-shadow:0 3px 0 var(--g-line);color:#4b5568;font-weight:700;cursor:pointer}
+.pick-btn.set{color:var(--g-navy);border-color:var(--g-navy);box-shadow:0 3px 0 var(--g-navy)}
+.pick-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--g-line)}
+.pick-caret{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--g-navy);color:#fff;font-size:.8rem;transition:transform .15s}
+.pick.open .pick-caret{transform:rotate(180deg)}
+@media (hover:hover){.pick-btn:hover{border-color:var(--g-navy)}}
+.pick-list{position:absolute;z-index:40;top:calc(100% + 8px);left:0;margin:0;padding:8px;list-style:none;
+  width:max-content;min-width:100%;max-width:min(380px,calc(100vw - 40px));max-height:360px;overflow:auto;overscroll-behavior:contain;
+  display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,1fr));gap:4px;
+  background:#fff;border:3px solid var(--g-navy);border-radius:16px;box-shadow:0 6px 0 rgba(31,42,68,.28)}
+.pick-list[hidden]{display:none}
+.pick.up .pick-list{top:auto;bottom:calc(100% + 8px)}
+.pick-list:focus{outline:none}
+.pick-list:focus-visible{box-shadow:0 6px 0 rgba(31,42,68,.28),0 0 0 3px #fff,0 0 0 6px var(--g-pink)}
+.pick-list [role=option]{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 10px;border-radius:10px;
+  border:2px solid transparent;color:var(--g-navy);font-weight:700;font-size:.9rem;white-space:nowrap;cursor:pointer;font-variant-numeric:tabular-nums}
+.pick-list .none{grid-column:1/-1;color:#4b5568;font-weight:600}
+.pick-list [role=option].act{background:#ffe3ee;border-color:var(--g-pink)}
+.pick-list [role=option][aria-selected="true"]{background:linear-gradient(#ffe066,var(--g-yellow-lo));border-color:#c78a00;color:var(--g-navy);font-weight:900}
+.pick-list [role=option][aria-selected="true"].act{border-color:var(--g-navy)}
+@media (max-width:639px){
+  .me-sel{flex-direction:column;align-items:stretch}
+  .pick{justify-content:space-between}
+  .pick-btn{flex:1;max-width:220px}
+  .pick-list{left:auto;right:0;max-width:calc(100vw - 64px)}
+}

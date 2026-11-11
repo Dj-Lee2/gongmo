@@ -711,13 +711,83 @@
     box.innerHTML = h;
   }
 
+
+  // ── 고르기 창(출생연도·사는 곳): 기본 <select> 대신 사이트 모양의 목록. 키보드 ↑↓←→·Home·End·Enter·Esc, 숫자·글자로 찾아가기 ──
+  function pickHTML(id, label, opts, value, cols) {
+    var cur = opts.filter(function (o) { return o[0] === value; })[0] || opts[0];
+    return '<div class="pick" data-cols="' + cols + '"><span class="pick-label" id="' + id + 'L">' + esc(label) + "</span>" +
+      '<button type="button" class="pick-btn' + (cur[0] ? " set" : "") + '" id="' + id + '" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="' + id + "L " + id + '">' +
+      '<span class="pick-val">' + esc(cur[1]) + '</span><span class="pick-caret" aria-hidden="true">▾</span></button>' +
+      '<ul class="pick-list" role="listbox" id="' + id + 'List" tabindex="-1" aria-labelledby="' + id + 'L" style="--cols:' + cols + '" hidden>' +
+      opts.map(function (o, i) {
+        var on = o[0] === cur[0];
+        return '<li role="option" id="' + id + "O" + i + '" data-v="' + esc(o[0]) + '" aria-selected="' + on + '"' + (o[0] ? "" : ' class="none"') + ">" + esc(o[1]) + "</li>";
+      }).join("") + "</ul></div>";
+  }
+  var pickTyped = "", pickTypedAt = 0;
+  function pickOpen(btn) {
+    pickCloseAll();
+    var box = btn.parentNode, list = box.querySelector(".pick-list");
+    list.hidden = false; btn.setAttribute("aria-expanded", "true"); box.classList.add("open");
+    // 아래 자리가 모자라면(휴대폰 아래 탭 줄 포함) 위로 연다
+    var r = btn.getBoundingClientRect(), below = window.innerHeight - r.bottom - (window.innerWidth < 640 ? 96 : 16);
+    box.classList.toggle("up", below < Math.min(list.scrollHeight, 360) && r.top > below);
+    var sel = list.querySelector('[aria-selected="true"]') || list.firstChild;
+    pickActive(list, sel);
+    list.focus({ preventScroll: true });
+  }
+  function pickActive(list, li) {
+    if (!li) return;
+    var old = list.querySelector(".act"); if (old) old.classList.remove("act");
+    li.classList.add("act"); list.setAttribute("aria-activedescendant", li.id);
+    var t = li.offsetTop, b = t + li.offsetHeight;
+    if (t < list.scrollTop) list.scrollTop = t - 6; else if (b > list.scrollTop + list.clientHeight) list.scrollTop = b - list.clientHeight + 6;
+  }
+  function pickClose(box, focusBtn) {
+    var list = box.querySelector(".pick-list"), btn = box.querySelector(".pick-btn");
+    if (list.hidden) return;
+    list.hidden = true; btn.setAttribute("aria-expanded", "false"); box.classList.remove("open", "up");
+    if (focusBtn) btn.focus();
+  }
+  function pickCloseAll() {
+    Array.prototype.forEach.call(document.querySelectorAll(".pick.open"), function (b) { pickClose(b, false); });
+  }
+  function pickChoose(box, li) {
+    var id = box.querySelector(".pick-btn").id, v = li.dataset.v;
+    pickClose(box, false);
+    if (id === "meBirth") ME.birth = +v || 0;
+    if (id === "meRegion") ME.region = v;
+    meChanged();
+    var again = $("#" + id); if (again) again.focus();
+  }
+  function pickKey(e, list) {
+    var box = list.parentNode, items = Array.prototype.slice.call(list.children), cur = list.querySelector(".act"),
+        i = Math.max(0, items.indexOf(cur)), cols = +box.dataset.cols || 1, n = i;
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); pickClose(box, true); return; }
+    if (e.key === "Tab") { pickClose(box, false); return; }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (cur) pickChoose(box, cur); return; }
+    if (e.key === "ArrowDown") n = i === 0 ? 1 : Math.min(items.length - 1, i + cols);
+    else if (e.key === "ArrowUp") n = i <= cols ? 0 : i - cols;
+    else if (e.key === "ArrowRight") n = Math.min(items.length - 1, i + 1);
+    else if (e.key === "ArrowLeft") n = Math.max(0, i - 1);
+    else if (e.key === "Home") n = 0;
+    else if (e.key === "End") n = items.length - 1;
+    else if (e.key.length === 1 && /\S/.test(e.key)) {
+      var now = Date.now(); pickTyped = (now - pickTypedAt > 900 ? "" : pickTyped) + e.key; pickTypedAt = now;
+      var hit = items.filter(function (li) { return li.textContent.indexOf(pickTyped) === 0; })[0];
+      if (hit) pickActive(list, hit);
+      e.preventDefault(); return;
+    } else return;
+    e.preventDefault(); pickActive(list, items[n]);
+  }
+
   // '내 조건' 탭 위 설정판: 고르면 바로 저장·반영
   function renderMeBar() {
     var bar = $("#meBar");
     if (state.tab !== "me") { bar.hidden = true; return; }
     bar.hidden = false;
-    var y = +todayKst().slice(0, 4), years = "";
-    for (var yy = y - 10; yy >= 1940; yy--) years += '<option value="' + yy + '"' + (ME.birth === yy ? " selected" : "") + ">" + yy + "년생</option>";
+    var y = +todayKst().slice(0, 4), years = [["", "선택 안 함"]];
+    for (var yy = y - 10; yy >= 1940; yy--) years.push([String(yy), yy + "년생"]);
     var chip = function (attr, val, label, on) {
       return '<button type="button" class="chip" ' + attr + '="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + "</button>";
     };
@@ -727,9 +797,8 @@
       '<div class="me-grid">' +
       '<div class="filter-group"><span class="filter-label" id="meRoleL">신분</span><div class="chips" role="group" aria-labelledby="meRoleL">' +
         ROLES.map(function (r) { return chip("data-me-role", r.k, r.label, ME.roles.indexOf(r.k) >= 0); }).join("") + "</div></div>" +
-      '<div class="me-sel"><label>출생연도<select id="meBirth"><option value="">선택 안 함</option>' + years + "</select></label>" +
-      '<label>사는 곳<select id="meRegion"><option value="">선택 안 함</option>' +
-        REGIONS.map(function (r) { return '<option' + (ME.region === r[0] ? " selected" : "") + ">" + r[0] + "</option>"; }).join("") + "</select></label></div>" +
+      '<div class="me-sel">' + pickHTML("meBirth", "출생연도", years, ME.birth ? String(ME.birth) : "", 4) +
+        pickHTML("meRegion", "사는 곳", [["", "선택 안 함"]].concat(REGIONS.map(function (r) { return [r[0], r[0]]; })), ME.region, 3) + "</div>" +
       '<div class="filter-group"><span class="filter-label" id="meFieldL">관심 분야</span><div class="chips" role="group" aria-labelledby="meFieldL">' +
         FIELD_LIST.map(function (f) { return chip("data-me-field", f, f, ME.fields.indexOf(f) >= 0); }).join("") + "</div></div>" +
       "</div>" +
@@ -1067,9 +1136,25 @@
       if (f) { var v = f.dataset.meField, j = ME.fields.indexOf(v); if (j >= 0) ME.fields.splice(j, 1); else ME.fields.push(v); meChanged(); var b2 = $('#meBar [data-me-field="' + v + '"]'); if (b2) b2.focus(); }
       if (e.target.closest("#meReset")) { ME = { roles: [], birth: 0, region: "", fields: [] }; meChanged(); var c = $("#meBar .chip"); if (c) c.focus(); }
     });
-    $("#meBar").addEventListener("change", function (e) {
-      if (e.target.id === "meBirth") { ME.birth = +e.target.value || 0; meChanged(); var x = $("#meBirth"); if (x) x.focus(); }
-      if (e.target.id === "meRegion") { ME.region = e.target.value; meChanged(); var y2 = $("#meRegion"); if (y2) y2.focus(); }
+    $("#meBar").addEventListener("click", function (e) {
+      var pb = e.target.closest(".pick-btn"), li = e.target.closest(".pick-list [role=option]");
+      if (pb) { if (pb.getAttribute("aria-expanded") === "true") pickClose(pb.parentNode, true); else pickOpen(pb); }
+      if (li) pickChoose(li.closest(".pick"), li);
+    });
+    $("#meBar").addEventListener("keydown", function (e) {
+      var list = e.target.closest(".pick-list");
+      if (list) { pickKey(e, list); return; }
+      var pb = e.target.closest(".pick-btn");
+      if (pb && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); pickOpen(pb); }
+    });
+    $("#meBar").addEventListener("mousemove", function (e) {
+      var li = e.target.closest(".pick-list [role=option]");
+      if (li && !li.classList.contains("act")) pickActive(li.parentNode, li);
+    });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".pick")) pickCloseAll(); });
+    $("#meBar").addEventListener("focusout", function (e) {
+      var box = e.target.closest(".pick");
+      if (box && e.relatedTarget && !box.contains(e.relatedTarget)) pickClose(box, false);
     });
     // 다른 탭에서 기록·내 조건을 바꾸면 이 탭도 맞춘다
     window.addEventListener("storage", function (e) {
