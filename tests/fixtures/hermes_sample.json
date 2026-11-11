@@ -1,0 +1,63 @@
+{
+ "updated_at": "2026-10-01T09:00:00+09:00",
+ "timezone": "Asia/Seoul",
+ "competitions": [
+  {
+   "id": "example-1",
+   "name": "2026 예시 AI 아이디어 공모전",
+   "round": "2026",
+   "official_url": "https://example.kr/contest/1",
+   "status": "recommended",
+   "deadline": "2099-12-31",
+   "first_seen": "2026-09-15",
+   "last_checked": "2026-10-01",
+   "last_verified_at": "2026-10-01T09:00:00+09:00",
+   "facts": {
+    "reason": "공공데이터를 활용한 개인 참가 아이디어 공모전",
+    "idea_proposal": "지역 데이터로 만든 생활 편의 서비스 기획안",
+    "eligibility": "대한민국 국민 누구나(개인 또는 3인 이하 팀)",
+    "submission": "기획서 10쪽 이내(PDF)",
+    "prize": "대상 300만원",
+    "ip": "저작권은 응모자에게 귀속",
+    "fee": "없음",
+    "ai": "생성형 AI 사용 시 사용 내역 기재",
+    "restrictions": "타 공모전 수상작 제외"
+   }
+  },
+  {
+   "id": "example-2",
+   "name": "2026 예시 데이터 분석 경진대회",
+   "round": "2026",
+   "official_url": "https://example.kr/contest/2",
+   "status": "watchlist",
+   "deadline": "2099-11-30",
+   "first_seen": "2026-09-20",
+   "last_checked": "2026-10-01",
+   "facts": {
+    "reason": "분석 과제와 제출물이 단순함",
+    "eligibility": "대학생·일반인",
+    "submission": "분석 코드와 결과 보고서",
+    "prize": "총상금 1,000만원",
+    "fee": "없음"
+   }
+  },
+  {
+   "id": "example-3",
+   "name": "예시 해커톤 2026",
+   "official_url": "https://example.kr/contest/3",
+   "status": "registration_closed",
+   "deadline": "2026-09-30",
+   "facts": {
+    "reason_not_selected": "오프라인 2박 3일 합숙 필수",
+    "eligibility": "대학(원)생 팀"
+   }
+  },
+  {
+   "id": "example-4",
+   "name": "예시 서포터즈 모집",
+   "official_url": "https://example.kr/contest/4",
+   "status": "excluded_non_competitive",
+   "facts": {}
+  }
+ ]
+}

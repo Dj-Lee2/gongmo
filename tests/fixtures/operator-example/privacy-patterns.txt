@@ -1,0 +1,11 @@
+# 테스트용 예시 — 운영에서는 저장소 밖 private/privacy-patterns.txt 에 실제 낱말을 둔다.
+clause: 예시님
+clause: 예시서비스
+clause: 예시\s?연구원
+clause: 예시청
+clause: (부산|부울경)\s?(지역\s?)?(거주|재직|근무)
+clause: 공무원\s?(의\s?)?정치|정치\s?중립
+clause: (대학원|직장)\s?(재학|진학|병행)\s?중(이라|이므로|으로)
+clause: 만?\s?2[5-9]세\s?이상
+clause: 만?\s?2[0-9]세(로|라|이므로|이라)
+hard: 예시님|예시서비스|예시\s?연구원

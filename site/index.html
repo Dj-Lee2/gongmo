@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>공모모아 — 공모전·경진대회·해커톤 한곳에</title>
+<meta name="description" content="여러 공모전 사이트의 공모전·경진대회·해커톤을 모아 마감 임박순·분야별로 보여 줍니다.">
+<meta name="theme-color" content="#ec4f87">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="공모모아">
+<meta property="og:title" content="공모모아 — 공모전·경진대회·해커톤 한곳에">
+<meta property="og:description" content="여러 공모전 사이트의 공고를 모아 마감 임박순·분야별로 보여 줍니다.">
+<meta property="og:url" content="https://gongmo.orfa.shop/">
+<meta property="og:image" content="https://gongmo.orfa.shop/img/og.png?v=3">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/img/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" id="homeLink" href="/" aria-label="공모모아 처음 화면">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M32 4 L40 22 L60 24 L45 37 L49 57 L32 47 L15 57 L19 37 L4 24 L24 22 Z" fill="#ffd43b" stroke="#1f2a44" stroke-width="4" stroke-linejoin="round"/><path d="M28 13 L31 19" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/><circle cx="26" cy="31" r="3" fill="#1f2a44"/><circle cx="38" cy="31" r="3" fill="#1f2a44"/><path d="M27 38 Q32 43 37 38" fill="none" stroke="#1f2a44" stroke-width="3" stroke-linecap="round"/><rect x="38" y="42" width="24" height="16" rx="4" fill="#ec4f87" stroke="#1f2a44" stroke-width="3"/><text x="50" y="54" text-anchor="middle" font-family="Pretendard,'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif" font-weight="900" font-size="10" fill="#fff">D-7</text></svg>
+      <div class="brand-text"><h1>공모모아</h1><span class="brand-sub">공모전·경진대회·해커톤 모음</span></div>
+    </a>
+    <div class="top-actions">
+      <button class="iconbtn" id="sizeBtn" aria-pressed="false" title="글자 크게">가<span class="plus">＋</span></button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="목록 구분">
+  <div class="wrap tabs-inner" id="tabs" role="group" aria-label="목록 구분"></div>
+</nav>
+
+<main id="main" tabindex="-1">
+  <div class="wrap">
+
+    <section id="meBar" class="mebar" hidden aria-label="내 조건 설정"></section>
+
+    <section class="search-row">
+      <div class="searchbox">
+        <span class="ph" aria-hidden="true">🔍</span>
+        <input id="q" type="search" placeholder="공모전·주최·분야 검색 (띄어쓰기 무시)" autocomplete="off" aria-label="검색">
+        <button id="qClear" class="qclear" hidden aria-label="검색어 지우기">✕</button>
+      </div>
+      <label class="sort">
+        정렬
+        <select id="sort">
+          <option value="deadline">마감 임박순</option>
+          <option value="new">최신순</option>
+          <option value="prize">상금순</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="filters">
+      <div class="filter-group">
+        <span class="filter-label">분야</span>
+        <div class="chips" id="fieldChips"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">참가 대상</span>
+        <div class="chips" id="targetChips"></div>
+      </div>
+    </section>
+
+
+    <section class="result">
+      <button class="todaybar" id="todayBar" aria-pressed="false" hidden></button>
+      <div class="trackbar" id="trackBar" hidden></div>
+      <div class="viewseg" id="viewSeg" role="group" aria-label="보기">
+        <button data-view="list" aria-pressed="true">목록</button>
+        <button data-view="cal" aria-pressed="false">마감 달력</button>
+      </div>
+      <section class="cal" id="cal" hidden aria-label="마감 달력"></section>
+      <h2 class="sr-only">공모전 목록</h2>
+      <div class="result-head">
+        <span class="result-count" id="count"></span>
+        <span class="cond" id="cond" hidden></span>
+        <button class="clearall" id="clearAll" hidden>조건 지우기 ✕</button>
+        <button class="clearall hideno" id="hideNo" aria-pressed="false" hidden></button>
+      </div>
+      <ul class="rows" id="cards"></ul>
+      <div class="more" id="more" hidden></div>
+      <p class="empty" id="empty" hidden>조건에 맞는 공모전이 없습니다.</p>
+    </section>
+
+    <footer class="foot">
+      <p id="updated"></p>
+      <ul class="src-status" id="srcStatus"></ul>
+      <p class="foot-note">공모모아는 여러 공모전 사이트와 공식 공고를 모아 마감순으로 보여 주는 무료 모음 서비스입니다. 일정·자격·상금은 바뀔 수 있으니 지원 전에 원문과 공식 공고를 꼭 확인하세요. 관심·진행 기록과 내 조건은 이 브라우저에만 저장되고 서버로 보내지 않습니다.</p>
+      <p class="foot-end"><button class="linkbtn" id="footTop">맨 위로 ↑</button></p>
+    </footer>
+  </div>
+</main>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-dim" id="drawerDim"></div>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <button class="drawer-close" id="drawerClose" aria-label="닫기">✕</button>
+    <div class="drawer-body" id="drawerBody"></div>
+  </div>
+</div>
+
+<button class="totop" id="toTop" aria-label="맨 위로" hidden>↑</button>
+<div class="toast" id="toast" aria-hidden="true"></div>
+<p class="sr-only" id="announce" role="status" aria-live="polite"></p>
+
+<script src="/app.js"></script>
+</body>
+</html>
