@@ -1075,12 +1075,25 @@
       FAVINFO[it.id] = snap(it); saveFav(); var box = $(".d-change"); if (box) box.remove(); render();
     };
     $("#toTop").hidden = true;
-    $("#drawer").hidden = false; document.body.classList.add("lock"); setInert(true);
+    $("#drawer").hidden = false; lockScroll(true); setInert(true);
     $(".drawer-panel").scrollTop = 0;
     $("#drawerClose").focus();
   }
   // fromHistory: 뒤로 가기로 닫힌 경우. 화면 단추로 닫으면 상세를 열며 쌓은 기록을 되돌린다.
   // 상세창이 열린 동안 뒤 화면은 inert(화면 읽기 가상 커서·Tab이 뒤로 새지 않게)
+  // 상세창이 열린 동안 뒤 화면 스크롤을 막는다. PC는 스크롤바가 사라지며 화면 폭이 넓어져 판·탭이 옆으로 밀리므로
+  // 사라진 스크롤바 폭만큼 오른쪽 여백을 채워 그대로 둔다.
+  function lockScroll(on) {
+    var b = document.body;
+    if (on) {
+      if (b.classList.contains("lock")) return;
+      var sbw = window.innerWidth - document.documentElement.clientWidth;
+      b.classList.add("lock");
+      b.style.paddingRight = sbw > 0 ? sbw + "px" : "";
+    } else {
+      b.classList.remove("lock"); b.style.paddingRight = "";
+    }
+  }
   function setInert(on) {
     [".skip", ".top", ".tabs", "#main", "#toTop"].forEach(function (sel) {
       var el = $(sel); if (!el) return;
@@ -1089,7 +1102,7 @@
   }
   function closeDetail(fromHistory) {
     if ($("#drawer").hidden) return;
-    $("#drawer").hidden = true; document.body.classList.remove("lock"); shownId = ""; document.title = BASE_TITLE; setInert(false);
+    $("#drawer").hidden = true; lockScroll(false); shownId = ""; document.title = BASE_TITLE; setInert(false);
     if (!fromHistory && state.id) {
       state.id = "";
       if (pushedDetail) { pushedDetail = false; try { history.back(); } catch (e) { syncHash(false); } }
@@ -1146,7 +1159,7 @@
   function goHome() {
     var isHome = listUrlOf(state) === "/" && $("#drawer").hidden;
     if (!isHome) {
-      if (!$("#drawer").hidden) { $("#drawer").hidden = true; document.body.classList.remove("lock"); opener = null; pushedDetail = false; shownId = ""; document.title = BASE_TITLE; setInert(false); }
+      if (!$("#drawer").hidden) { $("#drawer").hidden = true; lockScroll(false); opener = null; pushedDetail = false; shownId = ""; document.title = BASE_TITLE; setInert(false); }
       state = copyState(DEFAULT); syncHash(true); applyControls(); render();
     }
     scrollTop(isHome);
