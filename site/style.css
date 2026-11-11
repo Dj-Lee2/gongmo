@@ -726,3 +726,9 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 @media (max-width:439px){ .hm-dm{display:none} .hm-dd{font-size:.86rem;letter-spacing:0} }
 .hm-dl{white-space:nowrap}
 @media (max-width:379px){ .hm-day{padding:6px 0} .hm-dl{font-size:.8rem;letter-spacing:-.04em} }
+/* 고른 상태(노랑 탭·남색 칩)는 마우스를 올려도 그 색을 유지 — 올렸을 때는 조금 밝게만 */
+@media (hover:hover){
+  .tab[aria-pressed="true"]:hover,.tab.hl[aria-pressed="true"]:hover{background:linear-gradient(#ffe066,var(--g-yellow-lo));border-color:var(--g-pink-hi);box-shadow:0 3px 0 var(--g-pink-lo)}
+  .tb-chip[aria-pressed="true"]:not([class*="st-"]):hover,.hideno[aria-pressed="true"]:hover{background:var(--g-navy-2);border-color:var(--g-navy-2);color:#fff}
+  .tb-chip.st-prep[aria-pressed="true"]:hover,.tb-chip.st-sent[aria-pressed="true"]:hover,.tb-chip.st-win[aria-pressed="true"]:hover,.tb-chip.st-lose[aria-pressed="true"]:hover{filter:brightness(.97)}
+}
