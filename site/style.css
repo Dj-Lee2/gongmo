@@ -535,3 +535,89 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
   .pick-btn{flex:1;max-width:220px}
   .pick-list{left:auto;right:0;max-width:calc(100vw - 64px)}
 }
+
+/* ── 상세창(게임 테마로 맞춤, 2026-11): 연회색 판 위에 흰 카드, 위쪽 고정 머리 줄, 남색 이름표 제목 ── */
+.drawer-panel{background:var(--g-soft);padding:0 22px 40px}
+.drawer-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 -22px 16px;padding:10px 14px 10px 22px;background:#fff;border-bottom:3px solid var(--g-line)}
+.drawer-head-t{font-weight:900;color:var(--g-navy);font-size:.92rem}
+.drawer-close{position:static;float:none;flex:none;width:44px;height:44px;font-size:1.05rem}
+.d-title{margin:0 0 10px;font-size:1.15rem}
+.d-org{color:var(--fg);font-weight:600;margin-bottom:10px}
+.d-meta{gap:6px;align-items:center}
+.d-meta .tag.field{background:#fff;border:2px solid var(--brand-200);color:var(--brand-700);font-weight:700;border-radius:10px;padding:2px 10px}
+.d-meta .badge{border-radius:10px;padding:3px 10px;border:2px solid transparent;font-size:.84rem}
+.d-meta .badge.me.ok{border-color:#8ce99a} .d-meta .badge.me.check{border-color:#ffc078} .d-meta .badge.me.no{border-color:#ced4da}
+/* D-day: 목록 줄과 같은 테두리 칸 */
+.d-meta .dday,.sim .dday{display:inline-grid;place-items:center;border:3px solid #3bc9db;border-radius:12px;background:linear-gradient(#fff,#eaf6fb);color:var(--g-navy);font-weight:900}
+.d-meta .dday{padding:3px 10px;font-size:.9rem}
+.sim .dday{min-width:72px;min-height:44px;padding:2px 6px;font-size:.86rem}
+.d-meta .dday.urgent,.sim .dday.urgent{border-color:#ff8787;background:linear-gradient(#fff,#fff0f0);color:var(--urgent)}
+.d-meta .dday.soon,.sim .dday.soon{border-color:#ffa94d;background:linear-gradient(#fff,#fff4e6);color:var(--soon)}
+.d-meta .dday.closed,.d-meta .dday.soon-plan,.sim .dday.closed,.sim .dday.soon-plan{border-color:#ced4da;background:#fff;color:var(--muted)}
+/* 안내 띠 */
+.d-change{border-width:2px;border-radius:12px;font-weight:600}
+.d-change.closed{background:#fff;border-color:#adb5bd;color:var(--g-navy);font-weight:800}
+/* 묶음 제목: 남색 이름표 */
+.d-section{border-top:0;padding:10px 0}
+.d-section > h3{display:inline-block;margin:0 0 10px;padding:3px 12px;border-radius:10px;background:var(--g-navy);color:#fff;font-size:.86rem;font-weight:800}
+/* 흰 카드: 기본 정보·내 진행·요강 요약·내 조건 */
+.d-info,.d-track,.d-sum,.d-me{background:#fff;border:2px solid var(--g-line);border-radius:14px;box-shadow:0 3px 0 #e1e6ef}
+.d-info{margin:0;padding:4px 14px}
+.d-info .d-row{margin:0;padding:9px 0;border-bottom:2px dashed var(--g-soft);grid-template-columns:76px 1fr}
+.d-info .d-row:last-child{border-bottom:0}
+.d-info dt{color:var(--g-navy);font-weight:800}
+.d-info dd{margin:0;color:var(--fg)}
+.d-track{padding:12px 14px 14px;margin:6px 0}
+.d-track > h3{display:block;width:max-content}
+.d-track .seg{background:transparent;padding:0;gap:6px}
+.d-track .seg-b{background:#fff;border:2px solid var(--g-line);border-radius:10px;color:var(--g-navy);font-weight:700;min-height:44px}
+.d-track .seg-b[aria-pressed="true"]{background:var(--g-navy);border-color:var(--g-navy);color:#fff;box-shadow:none}
+@media (hover:hover){.d-track .seg-b:not([aria-pressed="true"]):hover{background:var(--g-soft);border-color:#b7c1d3}}
+.tr-fields label,.tr-memo{color:var(--g-navy);font-weight:800;font-size:.84rem}
+.tr-fields input,.tr-memo textarea{box-sizing:border-box;width:100%;border:2px solid var(--g-line);border-radius:12px;font-weight:500;color:var(--fg)}
+.tr-fields input:focus,.tr-memo textarea:focus{outline:none;border-color:var(--g-pink-hi);box-shadow:0 0 0 3px var(--brand-100)}
+.tr-memo{margin-top:10px}
+.d-sum,.d-me{padding:12px 14px}
+.d-sum .hk{color:var(--g-navy);font-weight:800}
+.tri-foot{font-size:.84rem}
+/* 비슷한 공모전: 목록 줄과 같은 카드 */
+.sims li{margin:0 0 8px}
+.sim{background:#fff;border:2px solid var(--g-line);border-radius:12px;box-shadow:0 3px 0 #e1e6ef;padding:10px 12px;align-items:center}
+@media (hover:hover){.sim:hover{background:#fff;border-color:var(--brand-200)}}
+.sim:focus-visible{outline:3px solid var(--g-pink-hi);outline-offset:2px}
+.sim-tit{color:var(--g-navy);font-weight:800}
+@media (max-width:639px){
+  .drawer-panel{padding:0 14px 40px;border-left:0}
+  .drawer-head{margin:0 -14px 14px;padding:8px 10px 8px 16px}
+}
+.tr-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .tr-fields label{min-width:0}
+
+/* ── 날짜 고르기(내 진행): 기본 달력 대신 사이트 모양 ── */
+.tr-fields{position:relative}
+.dp{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dp-label{color:var(--g-navy);font-weight:800;font-size:.84rem}
+.dp-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 8px 0 12px;
+  background:#fff;border:2px solid var(--g-line);border-radius:12px;box-shadow:0 3px 0 var(--g-line);color:#4b5568;font-weight:700;cursor:pointer;text-align:left}
+.dp-btn.set{color:var(--g-navy);border-color:var(--g-navy);box-shadow:0 3px 0 var(--g-navy)}
+@media (hover:hover){.dp-btn:hover{border-color:var(--g-navy)}}
+.dp-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--g-line)}
+.dp-ic{font-size:1rem}
+.dp-pop{position:absolute;z-index:5;top:calc(100% + 8px);left:0;width:min(320px,100%);box-sizing:border-box;padding:10px;
+  background:#fff;border:3px solid var(--g-navy);border-radius:16px;box-shadow:0 6px 0 rgba(31,42,68,.28)}
+.dp[data-for="trRes"] .dp-pop{left:auto;right:0}
+.dp-pop[hidden]{display:none}
+.dp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px -2px 8px;padding:4px;background:var(--g-navy);border-radius:11px}
+.dp-tit{color:#fff;font-weight:900;font-size:.95rem}
+.dp-nav{width:40px;height:40px;border-radius:9px;border:2px solid #0d1424;background:linear-gradient(#fff,#e3e8f1);color:var(--g-navy);font-size:1.3rem;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 2px 0 #0d1424}
+.dp-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.dp-wd{font-size:.8rem;font-weight:800;color:var(--muted);padding:2px 0}
+.dp-wd.sun,.dp-day.sun{color:#c92a2a} .dp-wd.sat,.dp-day.sat{color:#1c5fb8}
+.dp-day{aspect-ratio:1;min-height:38px;border:2px solid transparent;border-radius:10px;background:#fff;color:var(--g-navy);font-weight:700;font-size:.9rem;cursor:pointer;font-variant-numeric:tabular-nums}
+@media (hover:hover){.dp-day:hover{background:#ffe3ee;border-color:var(--g-pink)}}
+.dp-day.today{border-color:var(--g-pink-hi);font-weight:900}
+.dp-day[aria-pressed="true"]{background:linear-gradient(#ffe066,var(--g-yellow-lo));border-color:#c78a00;color:var(--g-navy);font-weight:900}
+.dp-day:focus-visible,.dp-nav:focus-visible,.dp-act:focus-visible{outline:3px solid var(--g-pink-hi);outline-offset:1px}
+.dp-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;padding-top:8px;border-top:2px dashed var(--g-soft)}
+.dp-act{min-height:40px;padding:0 14px;border-radius:10px;border:2px solid var(--g-navy);background:linear-gradient(#fff,#e9edf4);color:var(--g-navy);font-weight:800;cursor:pointer;box-shadow:0 2px 0 var(--g-navy)}
+.dp-act:disabled{opacity:.45;cursor:default;box-shadow:none}

@@ -150,6 +150,9 @@ class TestApplyChecks(unittest.TestCase):
         self.assertNotIn("triage", a)            # 마감이면 1차 판단을 붙이지 않음
         self.assertIn("link_warn", b)
         self.assertNotIn("link_warn", d)         # 한 번 안 열린 것은 아직 표시 안 함
+        e = [{"id": "e", "status": "접수중", "hermes": None}]
+        PV.apply_checks(e, {"e": {"ok": False, "fails": 3, "code": -1, "checked": "2026-10-20"}}, {})
+        self.assertNotIn("link_warn", e[0])      # robots.txt가 막아 안 연 것은 '안 열림'이 아니다
         self.assertNotIn("triage", c)            # 헤르메스가 본 것은 1차 판단 안 붙임
         self.assertNotIn("예시님", json.dumps(b["triage"], ensure_ascii=False))
 

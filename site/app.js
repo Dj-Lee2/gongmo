@@ -122,6 +122,12 @@
   }
 
   function md(d) { var m = /^\d{4}-(\d{2})-(\d{2})/.exec(d || ""); return m ? (+m[1]) + "." + (+m[2]) : d; }
+  // '11.4(수)' — 올해가 아니면 앞에 연도
+  function mdw(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ""); if (!m) return d || "";
+    var wd = ["일", "월", "화", "수", "목", "금", "토"][new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+    return (m[1] !== todayKst().slice(0, 4) ? m[1] + "." : "") + (+m[2]) + "." + (+m[3]) + "(" + wd + ")";
+  }
 
   // ── 내 조건: 방문자가 고른 신분·출생연도·지역·관심 분야(이 브라우저에만 저장) → 공고마다 맞음/확인 필요/안 맞음 ──
   // 규칙으로만 가린다: 참가 대상 표시(target_tags), 지역 제한 + 공고 글의 시·도 이름, 공고 글의 나이 문구.
@@ -182,6 +188,10 @@
         down("no", "참가 대상: " + tags.filter(function (t) { return t !== "지역제한"; }).join("·"));
     }
     var text = (it.target_raw || "") + " " + (it.summary && it.summary.eligibility || "");
+    // 공무원·공공기관 직원만 받는 공고(분류표엔 '누구나'로 잡히기도 함) — 신분 칩에 공무원이 없으니 원문 확인으로
+    if (ME.roles.length && /공무원|공무직|공공\s?기관\s?(직원|재직자|종사자)/.test(it.target_raw || "") &&
+        !/(공무원|공무직|공공\s?기관\s?(직원|재직자|종사자))[^,.;]{0,8}(제외|불가|참여\s?불가|참가\s?불가)/.test(it.target_raw || ""))
+      down("check", "공무원·공공기관 직원 대상으로 보임 — 원문 확인");
     if (tags.indexOf("지역제한") >= 0) {
       if (!ME.region) down("check", "지역 제한이 있는 공고");
       else {
@@ -615,10 +625,73 @@
     var h = '<div class="d-section d-track"><h3>내 진행</h3><div class="seg" role="group" aria-label="진행 단계">' + STAGES.map(function (s) {
       return '<button class="seg-b' + (s.k ? " st-" + s.k : "") + '" data-stage="' + s.k + '" aria-pressed="' + !!(st === s.k && (s.k || isFav(it.id))) + '">' + esc(s.label) + "</button>";
     }).join("") + "</div>";
-    h += '<div class="tr-fields"><label>제출한 날<input type="date" id="trSent" value="' + esc(t.sent || "") + '"></label>' +
-      '<label>결과 발표<input type="date" id="trRes" value="' + esc(t.res || "") + '"></label></div>' +
+    h += '<div class="tr-fields">' + dpHTML("trSent", "제출한 날", t.sent || "") + dpHTML("trRes", "결과 발표", t.res || "") + "</div>" +
       '<label class="tr-memo">메모<textarea id="trMemo" rows="3" maxlength="500" placeholder="팀원, 제출물, 준비할 것 등">' + esc(t.memo || "") + "</textarea></label></div>";
     return h;
+  }
+
+  // ── 날짜 고르기(내 진행의 제출한 날·결과 발표): 기본 달력 대신 사이트 모양 달력 ──
+  // 값은 숨은 input(#trSent·#trRes)에 두고 change 이벤트를 보내 기존 저장 코드를 그대로 쓴다.
+  function dpHTML(id, label, val) {
+    return '<div class="dp" data-for="' + id + '"><span class="dp-label" id="' + id + 'L">' + esc(label) + "</span>" +
+      '<input type="hidden" id="' + id + '" value="' + esc(dateOr(val)) + '">' +
+      '<button type="button" class="dp-btn' + (val ? " set" : "") + '" id="' + id + 'Btn" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="' + id + "L " + id + 'Btn">' +
+      '<span class="dp-val">' + (val ? esc(mdw(val)) : "날짜 고르기") + '</span><span class="dp-ic" aria-hidden="true">📅</span></button>' +
+      '<div class="dp-pop" role="dialog" aria-label="' + esc(label) + ' 고르기" hidden></div></div>';
+  }
+  function dpLabel(id) {
+    var inp = $("#" + id), b = $("#" + id + "Btn"); if (!inp || !b) return;
+    b.querySelector(".dp-val").textContent = inp.value ? mdw(inp.value) : "날짜 고르기";
+    b.classList.toggle("set", !!inp.value);
+  }
+  function isoDay(y, m0, d) { return new Date(Date.UTC(y, m0, d)).toISOString().slice(0, 10); } // 달은 0부터, 넘치면 다음 달로
+  function dpRender(dp, focusD) {
+    var pop = dp.querySelector(".dp-pop"), val = dp.querySelector("input").value, today = todayKst();
+    var f = /^(\d{4})-(\d{2})-(\d{2})$/.exec(focusD), y = +f[1], m = +f[2] - 1;
+    var first = new Date(Date.UTC(y, m, 1)).getUTCDay(), days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    var h = '<div class="dp-head"><button type="button" class="dp-nav" data-mv="-1" aria-label="이전 달">‹</button>' +
+      '<span class="dp-tit" aria-live="polite">' + y + "년 " + (m + 1) + '월</span><button type="button" class="dp-nav" data-mv="1" aria-label="다음 달">›</button></div>' +
+      '<div class="dp-grid">' + WEEK.map(function (w, i) { return '<span class="dp-wd' + (i === 0 ? " sun" : i === 6 ? " sat" : "") + '" aria-hidden="true">' + w + "</span>"; }).join("");
+    for (var i = 0; i < first; i++) h += '<span class="dp-blank"></span>';
+    for (var d = 1; d <= days; d++) {
+      var ds = isoDay(y, m, d), wd = (first + d - 1) % 7;
+      h += '<button type="button" class="dp-day' + (wd === 0 ? " sun" : wd === 6 ? " sat" : "") + (ds === today ? " today" : "") + '" data-d="' + ds + '"' +
+        ' tabindex="' + (ds === focusD ? 0 : -1) + '" aria-pressed="' + (ds === val) + '" aria-label="' + (m + 1) + "월 " + d + "일 " + WEEK[wd] + "요일" + (ds === today ? ", 오늘" : "") + '">' + d + "</button>";
+    }
+    h += '</div><div class="dp-foot"><button type="button" class="dp-act" data-act="today">오늘</button>' +
+      '<button type="button" class="dp-act" data-act="clear"' + (val ? "" : " disabled") + '>지우기</button></div>';
+    pop.innerHTML = h;
+    pop.dataset.focus = focusD;
+  }
+  function dpOpen(dp) {
+    dpCloseAll();
+    var pop = dp.querySelector(".dp-pop"), val = dp.querySelector("input").value;
+    dpRender(dp, val || todayKst());
+    pop.hidden = false; dp.classList.add("open"); dp.querySelector(".dp-btn").setAttribute("aria-expanded", "true");
+    var cur = pop.querySelector('.dp-day[tabindex="0"]'); if (cur) cur.focus();
+    if (pop.scrollIntoView) pop.scrollIntoView({ block: "nearest" });
+  }
+  function dpClose(dp, focusBtn) {
+    var pop = dp.querySelector(".dp-pop"); if (pop.hidden) return;
+    pop.hidden = true; dp.classList.remove("open"); dp.querySelector(".dp-btn").setAttribute("aria-expanded", "false");
+    if (focusBtn) dp.querySelector(".dp-btn").focus();
+  }
+  function dpCloseAll() { Array.prototype.forEach.call(document.querySelectorAll(".dp.open"), function (d) { dpClose(d, false); }); }
+  function dpSet(dp, v) {
+    var inp = dp.querySelector("input");
+    inp.value = v; dpLabel(inp.id); dpClose(dp, true);
+    inp.dispatchEvent(new Event("change"));
+  }
+  function dpMove(dp, ds) {
+    var pop = dp.querySelector(".dp-pop"), cur = pop.dataset.focus;
+    if (ds.slice(0, 7) !== cur.slice(0, 7)) dpRender(dp, ds);
+    else { var o = pop.querySelector('.dp-day[tabindex="0"]'); if (o) o.tabIndex = -1; pop.querySelector('[data-d="' + ds + '"]').tabIndex = 0; pop.dataset.focus = ds; }
+    pop.querySelector('[data-d="' + ds + '"]').focus();
+  }
+  function addDays(ds, n) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds); return isoDay(+m[1], +m[2] - 1, +m[3] + n); }
+  function addMonths(ds, n) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds), y = +m[1], mo = +m[2] - 1 + n, last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+    return isoDay(y, mo, Math.min(+m[3], last));
   }
   function bindTrack(it) {
     var box = $(".d-track"); if (!box) return;
@@ -626,7 +699,7 @@
       var b = e.target.closest("[data-stage]"); if (!b) return;
       var k = b.dataset.stage, patch = { st: k };
       if (k === "" && !isFav(it.id)) { toggleFav(it.id); }
-      if ((k === "sent" || k === "win" || k === "lose") && !$("#trSent").value) { patch.sent = todayKst(); $("#trSent").value = patch.sent; }
+      if ((k === "sent" || k === "win" || k === "lose") && !$("#trSent").value) { patch.sent = todayKst(); $("#trSent").value = patch.sent; dpLabel("trSent"); }
       setTrack(it.id, patch);
       [].forEach.call(box.querySelectorAll("[data-stage]"), function (x) { x.setAttribute("aria-pressed", String(x.dataset.stage === k)); });
       var df = $("#dFav"); if (df) df.textContent = isFav(it.id) ? "★ 관심 담음" : "☆ 관심 담기";
@@ -845,7 +918,7 @@
 
   function drow(label, val) {
     if (!val) return "";
-    return "<dl class=\"d-row\"><dt>" + esc(label) + "</dt><dd>" + esc(val) + "</dd></dl>";
+    return "<div class=\"d-row\"><dt>" + esc(label) + "</dt><dd>" + esc(val) + "</dd></div>";
   }
   // fromHistory: 주소(뒤로 가기·공유 링크)로 연 경우 — 기록을 새로 쌓지 않는다
   // replace: 상세 안에서 다른 공고로 옮길 때 — 기록을 쌓지 않고 주소만 바꾼다(뒤로 가기 = 상세 닫기 유지)
@@ -863,13 +936,15 @@
     opener = from || (fromHistory ? null : document.activeElement);
     if (replace) { state.id = id; syncHash(false); }
     else if (!fromHistory) { state.id = id; syncHash(true); pushedDetail = true; }
-    var period = "";
-    if (it.start_date || it.end_date) period = esc(it.start_date || "?") + " ~ " + esc(it.end_date || "?") + (it.end_time ? " " + esc(it.end_time) : "");
+    var period = "", endTxt = it.end_date ? mdw(it.end_date) + (it.end_time ? " " + it.end_time : "") : "";
+    if (it.start_date && it.end_date) period = mdw(it.start_date) + " ~ " + endTxt;
+    else if (it.end_date) period = endTxt + " 마감";
+    else if (it.start_date) period = mdw(it.start_date) + "부터";
+    var official = safeUrl(it.official_url);
     var links = (it.sources || []).map(function (s) {
       var u = safeUrl(s.url);
-      return u ? '<a class="btn" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(s.name) + " 원문 ↗</a>" : "";
+      return u && u !== official ? '<a class="btn" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(s.name) + " 원문 ↗</a>" : "";
     }).join("");
-    var official = safeUrl(it.official_url);
     var h = "";
     h += '<h2 class="d-title" id="dTitle">' + esc(it.title) + "</h2>";
     h += '<div class="d-org">' + esc(it.organizer || "주최 미상") + "</div>";
@@ -878,22 +953,23 @@
     var ch = isFav(it.id) && deadlineChange(it);
     if (ch) h += '<div class="d-change ' + (ch.later ? "later" : "earlier") + '">담은 뒤 마감일이 ' + (ch.later ? "늦춰졌습니다" : "앞당겨졌습니다") +
       ": " + esc(ch.from) + " → " + esc(ch.to) + ' <button class="linkbtn" id="dAck">확인</button></div>';
+    if (it.status === "마감" && !it.closed_by && !it.gone) h += '<div class="d-change closed">접수가 끝난 공고입니다.</div>';
     if (it.gone) h += '<div class="d-change">원문 사이트 목록에서 내려가 더 이상 모으지 않는 공고입니다. 담을 때 저장한 내용만 보입니다.</div>';
     if (it.closed_by) h += '<div class="d-change earlier">마감일 전이지만 원문에서 마감이 확인됐습니다: ' + esc(it.closed_by) + "</div>";
-    else if (it.link_warn) h += '<div class="d-change">원문이 ' + esc(md(it.link_warn.checked)) + " 확인 때 열리지 않았습니다(" +
+    else if (it.link_warn && it.link_warn.code !== -1) h += '<div class="d-change">원문이 ' + esc(md(it.link_warn.checked)) + " 확인 때 열리지 않았습니다(" +
       esc(it.link_warn.code ? "응답 " + it.link_warn.code : "응답 없음") + "). 해외에서 막는 사이트일 수 있어 직접 열어 보세요.</div>";
     h += '<div class="d-actions">';
     if (official) h += '<a class="btn primary" href="' + esc(official) + '" target="_blank" rel="noopener noreferrer">공식 공고 보기 ↗</a>';
     h += '<button class="btn" id="dFav">' + (isFav(it.id) ? "★ 관심 담음" : "☆ 관심 담기") + "</button>";
     if (!it.gone) h += '<button class="btn" id="dShare">공유</button>';
     h += "</div>";
-    h += trackHtml(it);
-    h += '<div class="d-section">';
+    h += '<div class="d-section"><dl class="d-info">';
     h += drow("접수기간", period);
     h += drow("참가대상", it.target_raw);
     h += drow("상금", prizeShort(it));
     h += drow("상태", it.status);
-    h += "</div>";
+    h += "</dl></div>";
+    h += trackHtml(it);
     if (it.summary && (it.summary.submission || it.summary.fee || (it.summary.eligibility && it.summary.eligibility !== it.target_raw))) {
       h += '<div class="d-section"><div class="d-sum"><h3>요강 요약</h3>';
       var elig = it.summary.eligibility && it.summary.eligibility !== it.target_raw ? it.summary.eligibility : ""; // 참가대상 칸과 같으면 한 번만
@@ -1089,6 +1165,30 @@
     });
     $("#drawerDim").addEventListener("click", function () { closeDetail(); });
     $("#drawerClose").addEventListener("click", function () { closeDetail(); });
+    $("#drawerBody").addEventListener("click", function (e) {
+      var dp = e.target.closest(".dp"); if (!dp) return;
+      var b = e.target.closest(".dp-btn"), day = e.target.closest(".dp-day"), nav = e.target.closest(".dp-nav"), act = e.target.closest(".dp-act");
+      if (b) { if (dp.classList.contains("open")) dpClose(dp, true); else dpOpen(dp); }
+      else if (day) dpSet(dp, day.dataset.d);
+      else if (nav) { var f = addMonths(dp.querySelector(".dp-pop").dataset.focus, +nav.dataset.mv); dpRender(dp, f); var nb = dp.querySelector('.dp-nav[data-mv="' + nav.dataset.mv + '"]'); if (nb) nb.focus(); }
+      else if (act) dpSet(dp, act.dataset.act === "today" ? todayKst() : "");
+    });
+    $("#drawerBody").addEventListener("keydown", function (e) {
+      var dp = e.target.closest(".dp.open"); if (!dp) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); dpClose(dp, true); return; }
+      if (!e.target.classList.contains("dp-day")) return;
+      var d = e.target.dataset.d, n = null, wd = new Date(d + "T00:00:00Z").getUTCDay();
+      if (e.key === "ArrowLeft") n = addDays(d, -1); else if (e.key === "ArrowRight") n = addDays(d, 1);
+      else if (e.key === "ArrowUp") n = addDays(d, -7); else if (e.key === "ArrowDown") n = addDays(d, 7);
+      else if (e.key === "Home") n = addDays(d, -wd); else if (e.key === "End") n = addDays(d, 6 - wd);
+      else if (e.key === "PageUp") n = addMonths(d, -1); else if (e.key === "PageDown") n = addMonths(d, 1);
+      if (n) { e.preventDefault(); dpMove(dp, n); }
+    });
+    $("#drawerBody").addEventListener("focusout", function (e) {
+      var dp = e.target.closest(".dp.open");
+      if (dp && e.relatedTarget && !dp.contains(e.relatedTarget)) dpClose(dp, false);
+    });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".dp")) dpCloseAll(); });
     $("#homeLink").addEventListener("click", function (e) {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; // 새 탭 열기는 그대로
       e.preventDefault(); goHome();

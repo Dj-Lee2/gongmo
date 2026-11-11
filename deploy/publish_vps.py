@@ -153,7 +153,8 @@ def apply_checks(items, links, triage):
         if lk.get("closed") and it.get("status") != "마감":
             it["status"] = "마감"
             it["closed_by"] = "%s (%s 확인)" % (lk.get("why") or "원문에 마감 표시", lk.get("checked", ""))
-        elif lk and not lk.get("ok") and int(lk.get("fails", 0)) >= 2 and it.get("status") != "마감":
+        # code -1 = 원문 사이트 robots.txt가 자동 확인을 막아 열어 보지 않은 것 — 안 열린 게 아니라 안내하지 않는다
+        elif lk and not lk.get("ok") and lk.get("code") != -1 and int(lk.get("fails", 0)) >= 2 and it.get("status") != "마감":
             it["link_warn"] = {"code": lk.get("code"), "checked": lk.get("checked", "")}
         tr = triage.get(it.get("id"))
         if tr and it.get("status") != "마감" and (it.get("hermes") or {}).get("status") not in JUDGED_HERMES:
