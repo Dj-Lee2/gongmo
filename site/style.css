@@ -709,3 +709,7 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 .foot-end .linkbtn{min-height:44px}
 /* 검색칸: 입력칸의 기본 너비(size)가 판보다 넓어 밖으로 나가던 것(삼성 인터넷 등) — 줄어들 수 있게 */
 .searchbox{min-width:0;max-width:100%} .searchbox input{width:0;min-width:0}
+/* 이번 주 마감: 좁은 칸에서도 건수 동그라미가 칸 밖으로 나가지 않게(칸 너비에 맞춰 줄어듦) */
+.hm-day{min-width:0;box-sizing:border-box;overflow:hidden}
+.hm-dn{box-sizing:border-box;min-width:min(34px,100%);max-width:100%}
+@media (max-width:439px){ .hm-days{gap:4px} .hm-day{padding:6px 2px} .hm-dn{padding:1px 4px;font-size:.84rem} .hm-dl{font-size:.8rem} }
