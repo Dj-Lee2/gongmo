@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   var ITEMS = [], META = {}, FAV = loadFav(), FAVINFO = loadFavInfo(), TRACK = loadTrack();
-  var DEFAULT = { tab: "open", q: "", fields: [], targets: [], sort: "deadline", due: "", id: "", view: "list", cm: "", cd: "", st: "" };
+  var DEFAULT = { tab: "home", q: "", fields: [], targets: [], sort: "deadline", due: "", id: "", view: "list", cm: "", cd: "", st: "" };
   var state = copyState(DEFAULT);
   var hideNo = load("gongmo.hideno") === "1"; // 내 조건에 안 맞는 공고 숨기기(이 기기에 기억)
   var opener = null; // 상세창을 연 요소(닫으면 초점을 돌려줌)
@@ -213,7 +213,8 @@
   function meFieldOk(it) { return !ME.fields.length || ME.fields.some(function (f) { return (it.fields || []).indexOf(f) >= 0; }); }
 
   var TABS = [
-    { k: "open", ic: "🏠", label: "접수중" },
+    { k: "home", ic: "🏠", label: "홈" },
+    { k: "open", ic: "📋", label: "접수중" },
     { k: "soon", ic: "⏰", label: "마감 임박" },
     { k: "new", ic: "🆕", label: "오늘 새로" },
     { k: "upcoming", ic: "📅", label: "접수 예정" },
@@ -237,15 +238,17 @@
     ITEMS.forEach(function (it) { if (it.code) { CODE[it.id] = it.code; BYCODE[it.code] = it.id; } });
   }
   // 목록 주소: 탭은 경로(/soon·/fav…, 접수중은 /), 달력은 뒤에 /cal, 검색·조건은 ?q=…&f=…&sort=…
-  var TAB_PATH = /^\/(?:(soon|new|upcoming|me|hermes|fav|all|closed)(?:\/(cal))?|(cal))\/?$/;
+  var TAB_PATH = /^\/(?:(open|soon|new|upcoming|me|hermes|fav|all|closed)(?:\/(cal))?|(cal))\/?$/;
   function urlOf(s) {
     var c = s.id && codeOf(s.id);
     return c ? "/c/" + c : listUrlOf(s);
   }
   function parseList(path, search) {
     var pre = copyState(DEFAULT), m = TAB_PATH.exec(path || "/");
-    if (m) { if (m[1]) pre.tab = m[1] === "hermes" ? "me" : m[1]; if (m[2] || m[3]) pre.view = "cal"; } // 예전 /hermes → /me
-    return readHash(String(search || "").replace(/^\?/, ""), pre);
+    if (m) { if (m[1]) pre.tab = m[1] === "hermes" ? "me" : m[1]; if (m[2] || m[3]) pre.view = "cal"; if (m[3]) pre.tab = "open"; } // 예전 /hermes → /me, 예전 /cal → 접수중 달력
+    var s = readHash(String(search || "").replace(/^\?/, ""), pre);
+    if (s.tab === "home" && (s.q || s.fields.length || s.targets.length || s.due || s.view === "cal")) s.tab = "open"; // 예전 /?q=… 는 접수중 검색이었다
+    return s;
   }
   function parseListUrl(u) { var i = u.indexOf("?"); return i < 0 ? parseList(u, "") : parseList(u.slice(0, i), u.slice(i)); }
   function hasLegacyHash() { return /^#(?:tab|q|f|t|sort|due|view|m|d|st|id)=/.test(location.hash); } // 예전 #tab=…&q=… 주소(#main 같은 앵커는 아님)
@@ -437,9 +440,9 @@
 
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(function (t) {
-      var n = t.k === "me" && !hasMe() ? "설정" : ITEMS.filter(function (it) { return matchTab(it, t.k); }).length + (t.k === "fav" ? goneItems().length : 0);
+      var n = t.k === "home" ? "" : t.k === "me" && !hasMe() ? "설정" : ITEMS.filter(function (it) { return matchTab(it, t.k); }).length + (t.k === "fav" ? goneItems().length : 0);
       return '<button class="tab' + (t.hl ? " hl" : "") + '" data-tab="' + t.k + '" aria-pressed="' +
-        (state.tab === t.k) + '"><span class="tab-ic" aria-hidden="true">' + t.ic + "</span>" + esc(t.label) + ' <span class="tab-count">' + n + "</span></button>";
+        (state.tab === t.k) + '"><span class="tab-ic" aria-hidden="true">' + t.ic + "</span>" + esc(t.label) + (n === "" ? "" : ' <span class="tab-count">' + n + "</span>") + "</button>";
     }).join("");
     // 휴대폰에서 고른 탭이 탭 줄 밖에 있으면 보이게
     var sel = $('#tabs [aria-pressed="true"]'), bar = $("#tabs");
@@ -506,6 +509,9 @@
   // 관심 담기처럼 같은 목록을 다시 그릴 때는 늘려 둔 만큼 그대로.
   var PAGE = 50, shown = PAGE, listKey = "";
   function render() {
+    var home = state.tab === "home";
+    $("#home").hidden = !home; $(".filters").hidden = home; $(".result").hidden = home; $(".sort").hidden = home;
+    if (home) { renderTabs(); renderMeBar(); renderHome(); listKey = ""; return; }
     renderTabs(); renderChips(); renderMeBar(); renderToday(); renderCond(); renderView(); renderCal(); renderTrackBar(); renderHideNo();
     var list = current();
     var key = listUrlOf(Object.assign({}, state, { id: "" })) + "|" + hideNo;
@@ -539,6 +545,70 @@
     var link = row && row.querySelector("a.row-link");
     if (link) link.focus({ preventScroll: true });
     announce((list.length - Math.min(shown, list.length) > 0 ? "" : "마지막까지 ") + Math.min(shown, list.length) + "건 보는 중");
+  }
+
+  // ── 홈: 한눈에 보기(숫자 타일·이번 주 마감·곧 마감·새로 올라온·상금 큰·분야별) ──
+  function hmItems(list, sub) {
+    return '<ul class="hm-list">' + list.map(function (it) {
+      return '<li class="hm-it" data-id="' + esc(it.id) + '"><span class="dday ' + ddayClass(it) + '">' + esc(ddayText(it)) + "</span>" +
+        '<span class="hm-main"><a class="hc-tit" href="' + esc(hrefOf(it)) + '">' + esc(it.title) + "</a>" +
+        '<span class="hm-sub">' + esc(sub(it)) + "</span></span></li>";
+    }).join("") + "</ul>";
+  }
+  function hmCard(cls, title, more, body) {
+    return '<section class="hm-card ' + cls + '"><div class="hm-head"><h2>' + title + "</h2>" + (more || "") + "</div>" + body + "</section>";
+  }
+  function hmMore(go, label, extra) { return '<button type="button" class="hm-more" data-go="' + go + '"' + (extra || "") + ">" + esc(label || "모두 보기") + " ›</button>"; }
+  function renderHome() {
+    var today = todayKst(), open = ITEMS.filter(function (it) { return it.status === "접수중"; });
+    var cnt = function (k) { return ITEMS.filter(function (it) { return matchTab(it, k); }).length; };
+    var orgOf = function (it) { return it.organizer || "주최 미상"; };
+    var h = "";
+    var tiles = [["open", "📋", "접수중", cnt("open")], ["soon", "⏰", "7일 안 마감", cnt("soon")], ["new", "🆕", "오늘 새로", cnt("new")], ["upcoming", "📅", "접수 예정", cnt("upcoming")]];
+    h += '<div class="hm-tiles">' + tiles.map(function (t) {
+      return '<button type="button" class="hm-tile t-' + t[0] + '" data-go="' + t[0] + '"><span class="hm-ic" aria-hidden="true">' + t[1] + "</span>" +
+        '<span class="hm-n">' + t[3] + '<small>건</small></span><span class="hm-l">' + t[2] + "</span></button>";
+    }).join("") + "</div>";
+    var dueToday = ITEMS.filter(isDueToday).length;
+    if (dueToday) h += '<button type="button" class="hm-due" data-go="open" data-due="today">⏰ 오늘 마감 <b>' + dueToday + "건</b> 바로 보기 ›</button>";
+    if (!hasMe()) h += '<div class="hm-cta"><span class="hm-cta-ic" aria-hidden="true">🎯</span><p>신분·출생연도·사는 곳을 고르면 나에게 맞는 공모전만 모아 봅니다.</p>' +
+      '<button type="button" class="btn primary" data-go="me">내 조건 고르기 ›</button></div>';
+    var week = "";
+    for (var i = 0; i < 7; i++) {
+      var d = addDays(today, i), n = open.filter(function (it) { return it.end_date === d; }).length;
+      var wd = WEEK[new Date(d + "T00:00:00Z").getUTCDay()], lab = i === 0 ? "오늘" : i === 1 ? "내일" : wd;
+      week += '<button type="button" class="hm-day' + (n ? "" : " zero") + (i === 0 ? " is-today" : "") + '" data-cal="' + d + '" aria-label="' + md(d) + " " + wd + "요일 마감 " + n + '건">' +
+        '<span class="hm-dl">' + lab + '</span><span class="hm-dd">' + md(d) + '</span><span class="hm-dn">' + n + "</span></button>";
+    }
+    h += hmCard("hm-week", "📆 이번 주 마감", hmMore("open", "마감 달력", ' data-view="cal"'), '<div class="hm-days">' + week + "</div>");
+    var soon = open.filter(function (it) { return it.dday != null && it.dday >= 0; }).sort(cmpDeadline).slice(0, 5);
+    var fresh = ITEMS.filter(function (it) { return it.is_new_today && it.status !== "마감"; }).sort(cmpDeadline).slice(0, 5);
+    var prize = open.filter(function (it) { return it.prize_total_won; }).sort(function (a, b) { return b.prize_total_won - a.prize_total_won; }).slice(0, 5);
+    var cols = "";
+    cols += hmCard("hm-soon", "⏰ 곧 마감", hmMore("soon"), soon.length ? hmItems(soon, orgOf) : '<p class="hm-empty">7일 안에 마감하는 공모전이 없습니다.</p>');
+    cols += hmCard("hm-new", "🆕 오늘 새로 올라온", hmMore("new"), fresh.length ? hmItems(fresh, orgOf) : '<p class="hm-empty">오늘 새로 모은 공모전이 아직 없습니다.</p>');
+    cols += hmCard("hm-prize", "💰 상금 큰 공모전", hmMore("open", "모두 보기", ' data-sort="prize"'), hmItems(prize, function (it) { return prizeShort(it) + " · " + orgOf(it); }));
+    if (hasMe()) {
+      var mine = ITEMS.filter(function (it) { return matchTab(it, "me"); }).sort(cmpDeadline);
+      cols += hmCard("hm-me", "🎯 내 조건에 맞는 <b>" + mine.length + "건</b>", hmMore("me"), mine.length ? hmItems(mine.slice(0, 5), orgOf) : '<p class="hm-empty">지금 조건에 맞는 공모전이 없습니다.</p>');
+    }
+    var favs = ITEMS.filter(function (it) { return isFav(it.id) && it.status !== "마감"; }).sort(cmpDeadline);
+    if (favs.length) cols += hmCard("hm-fav", "⭐ 관심 공모전 <b>" + favs.length + "건</b>", hmMore("fav"), hmItems(favs.slice(0, 5), orgOf));
+    h += '<div class="hm-cols">' + cols + "</div>";
+    var fc = (META.fields || []).map(function (f) { return [f, open.filter(function (it) { return (it.fields || []).indexOf(f) >= 0; }).length]; })
+      .filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var max = fc.length ? fc[0][1] : 1;
+    h += hmCard("hm-fields", "🗂️ 분야별 접수중", "", '<ul class="hm-bars">' + fc.map(function (x) {
+      return '<li><button type="button" class="hm-bar" data-field="' + esc(x[0]) + '" aria-label="' + esc(x[0]) + " " + x[1] + '건 보기"><span class="hm-bl">' + esc(x[0]) + "</span>" +
+        '<span class="hm-bt"><span class="hm-bf" style="width:' + Math.max(4, Math.round(x[1] / max * 100)) + '%"></span></span><span class="hm-bn">' + x[1] + "</span></button></li>";
+    }).join("") + "</ul>");
+    $("#home").innerHTML = h;
+  }
+  function goFromHome(el) {
+    state.q = ""; state.fields = []; state.targets = []; state.due = el.dataset.due || ""; state.st = "";
+    state.view = el.dataset.view || "list"; state.cm = ""; state.cd = "";
+    state.sort = el.dataset.sort || DEFAULT.sort;
+    applyControls(); setTab(el.dataset.go); scrollTop(false);
   }
   // 오늘 마감 줄: 0건이면 숨김. 누르면 오늘 마감만(접수중 탭), 다시 누르면 해제.
   function renderToday() {
@@ -1137,7 +1207,11 @@
     $("#fieldChips").addEventListener("click", chipHandler("fields", "field"));
     $("#targetChips").addEventListener("click", chipHandler("targets", "target"));
     var q = $("#q");
-    q.addEventListener("input", function () { state.q = q.value; $("#qClear").hidden = !q.value; syncHash(false); render(); });
+    q.addEventListener("input", function () {
+      state.q = q.value; $("#qClear").hidden = !q.value;
+      if (state.tab === "home" && q.value) { state.tab = "all"; syncHash(true); render(); return; } // 홈에서 찾으면 전체에서
+      syncHash(false); render();
+    });
     $("#qClear").addEventListener("click", function () { q.value = ""; state.q = ""; $("#qClear").hidden = true; syncHash(false); render(); q.focus(); });
     $("#sort").addEventListener("change", function () { state.sort = $("#sort").value; syncHash(false); render(); });
     document.addEventListener("click", function (e) {
@@ -1189,6 +1263,16 @@
       if (dp && e.relatedTarget && !dp.contains(e.relatedTarget)) dpClose(dp, false);
     });
     document.addEventListener("click", function (e) { if (!e.target.closest(".dp")) dpCloseAll(); });
+    $("#home").addEventListener("click", function (e) {
+      var g = e.target.closest("[data-go]"), c = e.target.closest("[data-cal]"), f = e.target.closest("[data-field]");
+      if (g) { goFromHome(g); return; }
+      if (c) {
+        state.q = ""; state.fields = []; state.targets = []; state.due = "";
+        state.view = "cal"; state.cd = c.dataset.cal; state.cm = c.dataset.cal.slice(0, 7);
+        applyControls(); setTab("open"); var cal = $("#cal"); if (cal) cal.scrollIntoView({ block: "start" }); focusDay(state.cd); return;
+      }
+      if (f) { state.q = ""; state.targets = []; state.due = ""; state.view = "list"; state.fields = [f.dataset.field]; applyControls(); setTab("open"); scrollTop(false); }
+    });
     $("#homeLink").addEventListener("click", function (e) {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; // 새 탭 열기는 그대로
       e.preventDefault(); goHome();

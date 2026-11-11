@@ -289,7 +289,7 @@ def publish_details(items, index_html, out):
     return len(keep), removed
 
 
-PUBLIC_TABS = ["", "soon", "new", "upcoming", "all", "closed"]
+PUBLIC_TABS = ["", "open", "soon", "new", "upcoming", "all", "closed"]
 
 
 def public_view(items):
