@@ -455,7 +455,9 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
 
 /* 아래쪽 */
 .foot{border-top:2px dashed var(--g-line)}
-.totop{background:linear-gradient(var(--g-pink-hi),var(--g-pink-lo));color:#fff;border:2px solid var(--g-pink-edge);box-shadow:0 4px 0 var(--g-pink-edge)}
+.totop{background:linear-gradient(#ffe066,var(--g-yellow-lo));color:var(--g-navy);font-weight:900;border:2px solid #c78a00;box-shadow:0 4px 0 #c78a00}
+@media (hover:hover){.totop:hover{background:linear-gradient(#fff3bf,var(--g-yellow));color:var(--g-navy);border-color:#c78a00}}
+.totop:active{transform:translateY(3px);box-shadow:0 1px 0 #c78a00}
 .toast{background:var(--g-navy);border:2px solid #fff;border-radius:14px}
 .todaybar{border-width:2px;border-radius:12px;font-weight:800}
 
