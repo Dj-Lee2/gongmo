@@ -3,6 +3,7 @@
 (function () {
   "use strict";
   var ITEMS = [], META = {}, FAV = loadFav(), FAVINFO = loadFavInfo(), TRACK = loadTrack();
+  var LOADED = false; // 자료(items.json)를 받았는지 — 받기 전에는 자리만 잡은 빈 틀을 보여 준다
   var DEFAULT = { tab: "home", q: "", fields: [], targets: [], sort: "deadline", due: "", id: "", view: "list", cm: "", cd: "", st: "" };
   var state = copyState(DEFAULT);
   var hideNo = load("gongmo.hideno") === "1"; // 내 조건에 안 맞는 공고 숨기기(이 기기에 기억)
@@ -231,7 +232,7 @@
   // 목록: https://gongmo.orfa.shop/soon?q=… (접수중·조건 없음은 /)
   // 상세: https://gongmo.orfa.shop/c/<7자 코드> — 공모전마다 게시 때 만든 페이지(링크 미리보기에 제목이 뜸).
   //       목록 조건은 주소 대신 history.state.list에 두어 뒤로 가기·새로고침 때 되살린다.
-  var CODE = {}, BYCODE = {}, BASE_TITLE = document.title;
+  var CODE = {}, BYCODE = {}, BASE_TITLE = / — 공모모아$/.test(document.title) ? "공모모아 — 공모전·경진대회·해커톤 한곳에" : document.title; // 상세 주소로 들어와도 닫으면 사이트 제목
   function codeOf(id) { return CODE[id] || ""; }
   function indexCodes() {
     CODE = {}; BYCODE = {};
@@ -440,7 +441,7 @@
 
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(function (t) {
-      var n = t.k === "home" ? "" : t.k === "me" && !hasMe() ? "설정" : ITEMS.filter(function (it) { return matchTab(it, t.k); }).length + (t.k === "fav" ? goneItems().length : 0);
+      var n = t.k === "home" || !LOADED ? "" : t.k === "me" && !hasMe() ? "설정" : ITEMS.filter(function (it) { return matchTab(it, t.k); }).length + (t.k === "fav" ? goneItems().length : 0);
       return '<button class="tab' + (t.hl ? " hl" : "") + '" data-tab="' + t.k + '" aria-pressed="' +
         (state.tab === t.k) + '"><span class="tab-ic" aria-hidden="true">' + t.ic + "</span>" + esc(t.label) + (n === "" ? "" : ' <span class="tab-count">' + n + "</span>") + "</button>";
     }).join("");
@@ -999,7 +1000,7 @@
   function openDetail(id, from, fromHistory, replace) {
     var it = findItem(id);
     if (!it) {
-      closeDetail(true);
+      closeDetail(true); $("#drawerBody").innerHTML = ""; // 내려간 공고: 미리 연 빈 틀도 비운다
       if (state.id) { state.id = ""; syncHash(false); }
       if (fromHistory) toast("이 공고는 목록에서 내려갔습니다.");
       return;
@@ -1405,6 +1406,41 @@
     if (sort.parentNode !== target) target.appendChild(sort);
   }
 
+
+  // ── 자료를 받기 전 첫 화면: 주소에 맞는 모양(홈/목록/상세)을 바로 그리고, 숫자·공고 자리는 회색 빈 틀로 ──
+  // (예전에는 자료가 올 때까지 목록 화면이 먼저 보였다가 홈으로 바뀌었다)
+  function skRows(n, cls) { var h = ""; for (var i = 0; i < n; i++) h += '<li class="' + cls + '"><span class="sk sk-dday"></span><span class="sk-main"><span class="sk sk-line"></span><span class="sk sk-line short"></span></span></li>'; return h; }
+  function preLayout() {
+    var home = state.tab === "home";
+    $("#home").hidden = !home; $(".filters").hidden = home; $(".result").hidden = home; $(".sort").hidden = home;
+    renderTabs();
+    if (home) {
+      var tiles = [["open", "📋", "접수중"], ["soon", "⏰", "7일 안 마감"], ["new", "🆕", "오늘 새로"], ["upcoming", "📅", "접수 예정"]], week = "", today = todayKst();
+      for (var i = 0; i < 7; i++) {
+        var d = addDays(today, i), wd = WEEK[new Date(d + "T00:00:00Z").getUTCDay()];
+        week += '<span class="hm-day zero' + (i === 0 ? " is-today" : "") + '"><span class="hm-dl">' + (i === 0 ? "오늘" : i === 1 ? "내일" : wd) + '</span><span class="hm-dd">' + md(d) + '</span><span class="hm-dn">&nbsp;</span></span>';
+      }
+      var card = function (t) { return '<section class="hm-card"><div class="hm-head"><h2>' + t + '</h2></div><ul class="hm-list">' + skRows(5, "hm-it sk-row") + "</ul></section>"; };
+      $("#home").innerHTML = '<div class="hm-tiles">' + tiles.map(function (t) {
+          return '<span class="hm-tile t-' + t[0] + '"><span class="hm-ic" aria-hidden="true">' + t[1] + '</span><span class="hm-n"><span class="sk sk-num"></span></span><span class="hm-l">' + t[2] + "</span></span>";
+        }).join("") + "</div>" +
+        '<section class="hm-card hm-week"><div class="hm-head"><h2>📆 이번 주 마감</h2></div><div class="hm-days">' + week + "</div></section>" +
+        '<div class="hm-cols n3 odd">' + card("⏰ 곧 마감") + card("🆕 오늘 새로 올라온") + card("💰 상금 큰 공모전") + "</div>";
+    } else {
+      var chips = function (n) { var h = ""; for (var i = 0; i < n; i++) h += '<span class="sk sk-chip"></span>'; return h; };
+      $("#fieldChips").innerHTML = chips(7); $("#targetChips").innerHTML = chips(5);
+      $("#count").textContent = "불러오는 중";
+      $("#cards").innerHTML = skRows(6, "row sk-row");
+    }
+    // 상세 주소(/c/코드)면 상세 창 틀을 바로 연다 — 자료가 오면 그 자리에 내용이 채워진다
+    if (/^\/c\/[a-z0-9]{5,16}\/?$/.test(location.pathname)) {
+      var t = (document.querySelector('meta[property="og:title"]') || {}).content || "";
+      $("#drawerBody").innerHTML = '<h2 class="d-title" id="dTitle">' + esc(t || "공모전") + '</h2><span class="sk sk-line" style="width:50%"></span>' +
+        '<div class="d-section"><div class="d-info">' + skRows(4, "sk-row d-sk") + "</div></div>";
+      $("#drawer").hidden = false; lockScroll(true); setInert(true);
+    }
+    document.documentElement.classList.remove("boot");
+  }
   function boot() {
     if (load("gongmo.size") === "large") setSize(true);
     placeSort();
@@ -1412,11 +1448,12 @@
     if (mq.addEventListener) mq.addEventListener("change", placeSort); else if (mq.addListener) mq.addListener(placeSort);
     var linkKey = takeSyncFromHash();
     state = hasLegacyHash() ? readHash() : parseList(location.pathname, location.search); // 자료를 받기 전 임시(상세 코드는 자료를 받은 뒤 readUrl로)
+    preLayout();
     Promise.all([
       fetch("/data/meta.json").then(function (r) { return r.json(); }),
       fetch("/data/items.json").then(function (r) { return r.json(); })
     ]).then(function (res) {
-      META = res[0]; ITEMS = uniqById(res[1] || []);
+      META = res[0]; ITEMS = uniqById(res[1] || []); LOADED = true;
       indexCodes();
       state = readUrl();
       refreshDates(ITEMS, META);
@@ -1426,6 +1463,8 @@
       if (state.id) openDetail(state.id, null, true); // 공유 링크로 들어옴
       syncHash(false); // 예전 #tab=…·#id= 주소를 새 모양(/soon?q=…, /c/코드)으로 바꿔 쓴다
     }).catch(function (err) {
+      if (!$("#drawer").hidden) { $("#drawer").hidden = true; lockScroll(false); setInert(false); }
+      $("#home").hidden = true; $(".result").hidden = false; $("#cards").innerHTML = ""; $("#fieldChips").innerHTML = ""; $("#targetChips").innerHTML = "";
       $("#count").textContent = "";
       var em = $("#empty");
       em.textContent = "공모전 자료를 불러오지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요. ";

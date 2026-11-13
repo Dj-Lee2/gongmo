@@ -732,3 +732,18 @@ main > .wrap{box-sizing:border-box;width:calc(100% - 32px);background:var(--g-pa
   .tb-chip[aria-pressed="true"]:not([class*="st-"]):hover,.hideno[aria-pressed="true"]:hover{background:var(--g-navy-2);border-color:var(--g-navy-2);color:#fff}
   .tb-chip.st-prep[aria-pressed="true"]:hover,.tb-chip.st-sent[aria-pressed="true"]:hover,.tb-chip.st-win[aria-pressed="true"]:hover,.tb-chip.st-lose[aria-pressed="true"]:hover{filter:brightness(.97)}
 }
+
+/* ── 첫 화면 깜빡임 막기: 스크립트가 주소에 맞는 모양을 그리기 전에는 판 안을 비워 둔다 ── */
+.boot main > .wrap > *{visibility:hidden}
+/* 자료를 받기 전 빈 틀(움직이지 않는 회색) */
+.sk{display:inline-block;background:var(--g-soft);border-radius:8px;color:transparent}
+.sk-num{width:56px;height:28px;vertical-align:middle}
+.sk-chip{width:88px;height:40px;flex:none}
+.sk-line{display:block;height:14px;width:80%;margin:4px 0}
+.sk-line.short{width:45%}
+.sk-dday{width:66px;height:36px;flex:none;border-radius:10px}
+.sk-main{display:flex;flex-direction:column;flex:1;min-width:0}
+.row.sk-row{display:flex;align-items:center;gap:12px;min-height:82px}
+.row.sk-row .sk-dday{width:72px;height:54px}
+.hm-it.sk-row{cursor:default}
+.d-sk{display:flex;align-items:center;gap:12px;padding:8px 0;list-style:none}
